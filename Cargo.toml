@@ -1,0 +1,8 @@
+[package]
+
+name = "rusty"
+version = "0.0.1"
+authors = [ "Michael Oates michael.stephen.oates@gmail.com" ]
+
+[[bin]]
+name = "rusty"
