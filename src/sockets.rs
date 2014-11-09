@@ -58,69 +58,9 @@ impl Address {
 	}
 }
 
-//pub struct Address {
-//	addr : *const sockaddr,
-//}
-//
-//impl Address{
-//	pub fn protocol(&self) -> Option<Protocol> {
-//		unsafe {
-//			return FromPrimitive::from_u16((*self.addr).sa_family);
-//		}
-//	}
-//}
-//
-//pub struct AddressInformation {
-//	addresses: Vec<Address>,
-//	ptr: *mut ifaddrs
-//}
-//
-//impl Drop for AddressInformation {
-//	fn drop(&mut self) {
-//		unsafe {
-//			freeifaddrs(self.ptr);
-//		}
-//	}
-//}
-
-//impl AddressInformation {
-//	pub fn new() -> Result<AddressInformation, ()> {
-//		unsafe {
-//			let mut addr : *mut ifaddrs = ptr::null_mut();
-//
-//			let result = getifaddrs(&mut addr);
-//
-//			if result == -1 {
-//				return Err(());
-//			}
-//
-//			let mut currentAddress = addr;
-//			let mut addresses = Vec::new();
-//
-//			while currentAddress != ptr::null_mut() {
-//				addresses.push(Address {addr: & (*(*currentAddress).ifa_addr)});
-//
-//				currentAddress = (*currentAddress).ifa_next;
-//			}
-//
-//
-//
-//			Ok(AddressInformation { addresses: addresses, ptr : addr })
-//		}
-//	}
-//
-////	pub fn with_protocol(&mut self, protocol: Protocol) {
-////		self.addresses = self.addresses
-////						.into_iter()
-////						.filter(|a| { a.protocol().unwrap_or(Invalid) == protocol })
-////						.collect::<Vec<Address>>();
-////	}
-//}
-
 #[deriving(Show)]
 pub struct RemoteSocket {
 	pub handle: libc::c_int,
-//	pub addr: Address
 }
 
 impl RemoteSocket {
