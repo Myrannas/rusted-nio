@@ -1,6 +1,6 @@
 use libc::funcs::posix88::unistd::close;
 use libc;
-use libc::funcs::c95::stdio::perror;
+use errors;
 
 #[allow(dead_code)]
 enum EPollOperation {
@@ -47,44 +47,37 @@ pub struct EPoll {
 
 impl EPoll {
 	pub fn new(flags : u32, buffer_size: uint) -> EPoll {
-		unsafe {
-			debug!("Creating new epoll instance");
+		debug!("Creating new epoll instance");
 
-			let event_buffer = Vec::from_fn(buffer_size,|_| {EPollEvent{events:0 , data:0}});
+		let event_buffer = Vec::from_fn(buffer_size,|_| {EPollEvent{events:0 , data:0}});
 
-			return EPoll {
-				handle : epoll_create1(flags as i32),
-				event_buffer : event_buffer
-			}
+		return EPoll {
+			handle : unsafe {epoll_create1(flags as i32)},
+			event_buffer : event_buffer
 		}
 	}
 
 	pub fn add(& self, fd: i32, event: &mut EPollEvent) -> Result<(),()> {
-		unsafe {
-			let result = epoll_ctl(self.handle, CtlAdd as i32, fd, event);
+		let result = unsafe {epoll_ctl(self.handle, CtlAdd as i32, fd, event)};
 
-			if result == -1 {
-				error!("Unable to add event ({}) to epoll instance ({})", event, self);
-				return Err(());
-			} else {
-				debug!("Added new event ({}) to epoll instance ({})", event, self);
-				return Ok(());
-			}
+		if result == -1 {
+			error!("Unable to add event ({}) to epoll instance ({})", event, self);
+			return Err(());
+		} else {
+			debug!("Added new event ({}) to epoll instance ({})", event, self);
+			return Ok(());
 		}
 	}
 
 	pub fn poll(& mut self, timeout: i32) -> Result<&[EPollEvent],()> {
-		unsafe {
-			let result = epoll_wait(self.handle, self.event_buffer.as_mut_ptr(), self.event_buffer.len() as libc::c_int, timeout as libc::c_int);
+		let result = unsafe {epoll_wait(self.handle, self.event_buffer.as_mut_ptr(), self.event_buffer.len() as libc::c_int, timeout as libc::c_int)};
 
-			if result == -1 {
-				error!("Error polling ({})", self);
-				let err_text = "Error".to_c_str();
-				perror(err_text.as_ptr());
-				return Err(());
-			} else {
-				return Ok(self.event_buffer.as_slice().slice(0, result as uint))
-			}
+		if result == -1 {
+			error!("Error polling ({})", self);
+			errors::print_error("Error polling");
+			return Err(());
+		} else {
+			return Ok(self.event_buffer.as_slice().slice(0, result as uint))
 		}
 	}
 }

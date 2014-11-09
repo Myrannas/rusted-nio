@@ -1,10 +1,9 @@
-use libc::types::os::common::bsd44::{ifaddrs, sockaddr, sockaddr_in, in_addr};
-use libc::funcs::bsd43::{getifaddrs,freeifaddrs,socket,bind,listen,accept};
-use std::ptr;
+use libc::types::os::common::bsd44::{sockaddr, sockaddr_in, in_addr};
+use libc::funcs::bsd43::{socket,bind,listen,accept};
 use libc;
 
 //OS
-use libc::consts::os::bsd44::{AF_INET,AF_INET6,SOCK_STREAM};
+use libc::consts::os::bsd44::{AF_INET,SOCK_STREAM};
 use libc::consts::os::extra::O_NONBLOCK;
 
 //POSIX88
@@ -14,7 +13,6 @@ use libc::consts::os::posix88::{EWOULDBLOCK,EAGAIN};
 
 use libc::consts::os::posix01::{F_GETFL,F_SETFL};
 
-use std::num::FromPrimitive;
 use std::mem::{size_of,transmute};
 use std::os::errno;
 
@@ -113,7 +111,12 @@ impl ServerSocket {
 				let addr = address.to_addr();
 				let result = unsafe {bind(fd, &addr, size_of::<sockaddr>() as u32)};
 
-				return Ok(socket)
+				if result != -1 {
+					return Ok(socket)
+				} else {
+					error!("Error binding to socket - errno {} for descriptor {}", result, fd);
+					return Err(())
+				}
 			} else {
 				error!("Error creating socket descriptor - errno {}", fd);
 
@@ -148,7 +151,8 @@ impl ServerSocket {
 			}
 		} else {
 			let remote = RemoteSocket{ handle: result };
-			remote.make_non_blocking();
+
+			try!(remote.make_non_blocking());
 
 			Ok( remote )
 		}

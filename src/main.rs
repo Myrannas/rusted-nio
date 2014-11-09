@@ -13,20 +13,26 @@ mod sockets;
 mod signals;
 
 fn main() {
-	let x = 5i;
 	signals::init();
 
-//	sockets::bind(8080);
 	let addr = sockets::ServerSocket::new(& sockets::localhost(8080));
 
 	if addr.is_ok() {
 		let socket = addr.ok().unwrap();
-		socket.listen();
+		if socket.listen().is_err() {
+			error!("Error listening for socket {}", socket);
+			return;
+		}
 
 		{
 		let mut epoll = epoll::EPoll::new(0, 1);
 		let mut event = epoll::EPollEvent::new(socket.handle as u64, [epoll::EPollEventType::EPollIn, epoll::EPollEventType::EPollEt]);
 		let result = epoll.add(socket.handle, &mut event);
+
+		if result.is_err() {
+			error!("Error binding epoll {} to listen socket {}", epoll, socket);
+			return;
+		}
 
 		let mut clients = Vec::new();
 
@@ -40,23 +46,23 @@ fn main() {
 
 				match events {
 						Ok(events) => {
-						if (events.len() > 0) {
+						if events.len() > 0 {
 							debug!("Received {} events", events.len())
 
 							for event in events.iter() {
-								if (event.data as i32 == socket.handle) {
+								if event.data as i32 == socket.handle {
 									//Listening port
 
 									loop {
 										let client = socket.accept();
 
-										if (client.is_err()) {
+										if client.is_err() {
 											break;
 										} else {
-											let newClient = client.ok().unwrap();
-											debug!("Accepted client {}", newClient);
+											let new_client = client.ok().unwrap();
+											debug!("Accepted client {}", new_client);
 
-											clients.push(newClient);
+											clients.push(new_client);
 										}
 									}
 								}
